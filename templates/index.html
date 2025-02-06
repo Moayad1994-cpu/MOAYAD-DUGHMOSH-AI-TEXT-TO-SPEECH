@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moayad Dughmosh AI Speech to Text Converter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: #000000;
+            transition: background 0.3s ease;
+        }
+        body.light {
+            background: linear-gradient(135deg, #f4f4f4, #e6e6e6);
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        .language-selection, .duration-selection {
+            margin-bottom: 10px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        textarea {
+            width: 95%;
+            height: 120px;
+            margin-top: 10px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            resize: vertical;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        .theme-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+          /* Footer Styles */
+        footer {
+            background-color: #2c3e50;
+            color: #ffffff;
+            text-align: center;
+            padding: 15px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+        }
+        footer p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-toggle" id="toggle-theme">🌙</div>
+    <div class="container">
+        <h1>Moayad Dughmosh AI Speech to Text Converter</h1>
+        <div class="language-selection">
+            <label for="language">Select Language:</label>
+            <select id="language">
+                <option value="en-US">English</option>
+                <option value="ar-EG">Arabic</option>
+            </select>
+        </div>
+        <div class="duration-selection">
+            <label for="duration">Recording Duration (seconds):</label>
+            <input type="number" id="duration" value="5">
+        </div>
+        <button id="record-button">Record Speech</button>
+        <textarea id="transcribed-text"></textarea>
+        <button id="copy-button">Copy Text</button>
+        <button id="generate-voice-button">Generate Voice</button>
+        <audio id="audio-player" controls style="display: none;"></audio>
+        <a id="download-link" style="display: none;">Download Voice</a>
+    </div>
+
+     <!-- Footer Section -->
+    <footer>
+        <p>DEVELOPED BY Moayad Dughmosh @2025</p>
+    </footer>
+
+    <script>
+        document.getElementById('record-button').addEventListener('click', function() {
+            const language = document.getElementById('language').value;
+            const duration = document.getElementById('duration').value;
+            fetch('/record', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `language=${language}&duration=${duration}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('transcribed-text').value = data.text;
+                } else {
+                    alert(data.error);
+                }
+            });
+        });
+
+        document.getElementById('copy-button').addEventListener('click', function() {
+            const text = document.getElementById('transcribed-text').value;
+            navigator.clipboard.writeText(text).then(() => alert('Text copied to clipboard'));
+        });
+
+        document.getElementById('generate-voice-button').addEventListener('click', function() {
+            const text = document.getElementById('transcribed-text').value;
+            const language = document.getElementById('language').value;
+            fetch('/generate_voice', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `text=${encodeURIComponent(text)}&language=${language}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.filename) {
+                    const audioPlayer = document.getElementById('audio-player');
+                    audioPlayer.src = `/download/${data.filename}`;
+                    audioPlayer.style.display = 'block';
+                    audioPlayer.load();
+                    audioPlayer.play();
+
+                    const downloadLink = document.getElementById('download-link');
+                    downloadLink.href = `/download/${data.filename}`;
+                    downloadLink.style.display = 'block';
+                } else {
+                    alert(data.error);
+                }
+            });
+        });
+
+        document.getElementById('toggle-theme').addEventListener('click', function() {
+            document.body.classList.toggle('light');
+            this.textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
+        });
+    </script>
+</body>
+</html>
